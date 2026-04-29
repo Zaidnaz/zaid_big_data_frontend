@@ -10,6 +10,7 @@ import { RiskDistributionPie } from "@/components/custom/widgets/risk-distributi
 import { CorrelationsBar } from "@/components/custom/widgets/correlations-bar";
 import { HighRiskTable } from "@/components/custom/widgets/high-risk-table";
 import { InsightsPanel } from "@/components/custom/widgets/insights-panel";
+import { HistogramBar } from "@/components/custom/widgets/histogram-bar";
 
 // Define types for our analytics data
 interface AnalyticsData {
@@ -21,6 +22,7 @@ interface AnalyticsData {
     visualizations: {
       risk_distribution: { [key: string]: number };
       correlations: { [key: string]: number };
+      histograms?: Record<string, { bin: string; count: number }[]>;
     };
     high_risk_patients: any[];
     mode?: "standard" | "max";
@@ -52,14 +54,29 @@ export function Dashboard({ data }: DashboardProps) {
     data.mode === "max" &&
     (!!data.profile || (data.insights?.length ?? 0) > 0 || !!data.clinical_flags);
 
+  const hist = data.visualizations.histograms ?? {};
+  const hasAge = Array.isArray(hist.age) && hist.age.length > 0;
+  const hasBmi = Array.isArray(hist.bmi) && hist.bmi.length > 0;
+  const hasBp = Array.isArray(hist.blood_pressure) && hist.blood_pressure.length > 0;
+
   const layoutLg = [
     { i: "metric_total", x: 0, y: 0, w: 4, h: 1 },
     { i: "metric_anomaly", x: 4, y: 0, w: 4, h: 1 },
     { i: "metric_time", x: 8, y: 0, w: 4, h: 1 },
-    { i: "bar", x: 0, y: 1, w: 8, h: 2 },
-    { i: "pie", x: 8, y: 1, w: 4, h: 2 },
-    ...(showInsights ? [{ i: "insights", x: 0, y: 3, w: 12, h: 2 }] : []),
-    { i: "table", x: 0, y: showInsights ? 5 : 3, w: 12, h: 3 },
+    { i: "hist_risk", x: 0, y: 1, w: 6, h: 2 },
+    { i: "bar", x: 6, y: 1, w: 6, h: 2 },
+    { i: "pie", x: 0, y: 3, w: 4, h: 2 },
+    ...(hasAge ? [{ i: "hist_age", x: 4, y: 3, w: 4, h: 2 }] : []),
+    ...(hasBmi ? [{ i: "hist_bmi", x: 8, y: 3, w: 4, h: 2 }] : []),
+    ...(hasBp ? [{ i: "hist_bp", x: 0, y: 5, w: 6, h: 2 }] : []),
+    ...(showInsights ? [{ i: "insights", x: 6, y: 5, w: 6, h: 2 }] : []),
+    {
+      i: "table",
+      x: 0,
+      y: 7,
+      w: 12,
+      h: 3,
+    },
   ];
 
   return (
@@ -106,11 +123,49 @@ export function Dashboard({ data }: DashboardProps) {
             <CorrelationsBar correlations={data.visualizations.correlations} />
           </div>
 
+          <div key="hist_risk" className="h-full">
+            <HistogramBar
+              title="Risk Score Histogram"
+              subtitle="Distribution across 10 bins (0–1)"
+              data={hist.risk_score ?? []}
+            />
+          </div>
+
           <div key="pie" className="h-full">
             <RiskDistributionPie
               riskDistribution={data.visualizations.risk_distribution}
             />
           </div>
+
+          {hasAge ? (
+            <div key="hist_age" className="h-full">
+              <HistogramBar
+                title="Age Distribution"
+                subtitle="Detected column"
+                data={hist.age ?? []}
+              />
+            </div>
+          ) : null}
+
+          {hasBmi ? (
+            <div key="hist_bmi" className="h-full">
+              <HistogramBar
+                title="BMI Distribution"
+                subtitle="Detected column"
+                data={hist.bmi ?? []}
+              />
+            </div>
+          ) : null}
+
+          {hasBp ? (
+            <div key="hist_bp" className="h-full">
+              <HistogramBar
+                title="Blood Pressure Distribution"
+                subtitle="Detected column"
+                data={hist.blood_pressure ?? []}
+              />
+            </div>
+          ) : null}
 
           {showInsights ? (
             <div key="insights" className="h-full">

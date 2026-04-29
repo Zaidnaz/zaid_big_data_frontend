@@ -140,7 +140,8 @@ export function ManualInput({
   isLoading: boolean;
   onAnalyze: (records: Record<string, unknown>[]) => void;
 }) {
-  const [rows, setRows] = useState<ManualPatientRow[]>(() => generateRows(8));
+  const [rowCount, setRowCount] = useState(200);
+  const [rows, setRows] = useState<ManualPatientRow[]>(() => generateRows(50));
 
   const records = useMemo(() => {
     return rows.map((r) => ({
@@ -158,14 +159,30 @@ export function ManualInput({
         <div>
           <CardTitle className="text-base">Quick Demo Input</CardTitle>
           <p className="text-sm text-muted-foreground mt-1">
-            Edit a few patient records or roll the dice.
+            Edit records or generate a larger batch for analytics.
           </p>
         </div>
         <div className="flex gap-2">
+          <div className="hidden sm:flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Rows</span>
+            <Input
+              type="number"
+              min={10}
+              max={2000}
+              step={10}
+              value={rowCount}
+              onChange={(e) => {
+                const v = Number(e.target.value);
+                if (Number.isFinite(v)) setRowCount(Math.max(10, Math.min(2000, v)));
+              }}
+              className="h-9 w-[120px]"
+              disabled={isLoading}
+            />
+          </div>
           <Button
             type="button"
             variant="outline"
-            onClick={() => setRows(generateRows(20))}
+            onClick={() => setRows(generateRows(rowCount))}
             disabled={isLoading}
           >
             <Dices className="h-4 w-4 mr-2" />
@@ -181,6 +198,9 @@ export function ManualInput({
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
+        <p className="text-xs text-muted-foreground">
+          Tip: generating 200–1000 rows gives a more “big data” feel without uploading a file.
+        </p>
         <div className="rounded-xl border overflow-auto">
           <Table>
             <TableHeader>

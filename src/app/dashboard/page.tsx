@@ -19,6 +19,7 @@ interface AnalyticsData {
   visualizations: {
     risk_distribution: { [key: string]: number };
     correlations: { [key: string]: number };
+    histograms?: Record<string, { bin: string; count: number }[]>;
   };
   high_risk_patients: any[];
   mode?: "standard" | "max";
